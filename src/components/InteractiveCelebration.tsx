@@ -41,18 +41,12 @@ export default function InteractiveCelebration({
   const [celebrationSongIndex, setCelebrationSongIndex] = useState(0);
   const activeCelebrationSong = playlistSongs[celebrationSongIndex];
 
-  // Initialize cake celebration audio (happy.mp3)
+  // Stop cake audio on unmount
   useEffect(() => {
-    const audio = new Audio("/happy.mp3");
-    audio.preload = "auto";
-    audio.addEventListener("play", () => setIsCakeSongPlaying(true));
-    audio.addEventListener("pause", () => setIsCakeSongPlaying(false));
-    audio.addEventListener("ended", () => setIsCakeSongPlaying(false));
-    cakeAudioRef.current = audio;
-
     return () => {
-      audio.pause();
-      audio.src = "";
+      if (cakeAudioRef.current) {
+        cakeAudioRef.current.pause();
+      }
     };
   }, []);
 
@@ -178,6 +172,27 @@ export default function InteractiveCelebration({
     if (isCutting || isCakeCut) return;
     setIsCutting(true);
 
+    // Stop and lock ambient background engine so it doesn't clash
+    if (audioEngine) {
+      audioEngine.stop(0.2, true);
+    }
+
+    // Play happy.mp3 synchronously within the user's click gesture frame
+    if (cakeAudioRef.current) {
+      cakeAudioRef.current.currentTime = 0;
+      cakeAudioRef.current.volume = 1;
+      const playPromise = cakeAudioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsCakeSongPlaying(true);
+          })
+          .catch((err) => {
+            console.error("Cake audio play failed:", err);
+          });
+      }
+    }
+
     setTimeout(() => {
       playSliceAcousticCue();
     }, 700);
@@ -192,19 +207,6 @@ export default function InteractiveCelebration({
         origin: { y: 0.65 },
         colors: ["#F6D365", "#FF9A9E", "#FECFEF", "#D9E7FF", "#FFFFFF", "#FFD700"],
       });
-
-      // Pause the background song so the celebration music plays cleanly
-      if (audioEngine && audioEngine.getIsPlaying()) {
-        audioEngine.stop(0.4);
-      }
-
-      // Play the "happy" mp3 for cake celebration
-      if (cakeAudioRef.current) {
-        cakeAudioRef.current.currentTime = 0;
-        cakeAudioRef.current.play().catch(() => {
-          // Autoplay fallback if blocked by browser
-        });
-      }
     }, 1300);
   };
 
@@ -212,11 +214,14 @@ export default function InteractiveCelebration({
     if (!cakeAudioRef.current) return;
     if (isCakeSongPlaying) {
       cakeAudioRef.current.pause();
+      setIsCakeSongPlaying(false);
     } else {
-      if (audioEngine && audioEngine.getIsPlaying()) {
-        audioEngine.stop(0.4);
+      if (audioEngine) {
+        audioEngine.stop(0.2, true);
       }
-      cakeAudioRef.current.play().catch(() => {});
+      cakeAudioRef.current.play().then(() => {
+        setIsCakeSongPlaying(true);
+      }).catch(() => {});
     }
   };
 
@@ -239,6 +244,16 @@ export default function InteractiveCelebration({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0B0F1C] text-white px-6 select-none overflow-y-auto py-12">
+      {/* Preloaded Cake Celebration Audio */}
+      <audio
+        ref={cakeAudioRef}
+        src="/happy.mp3"
+        preload="auto"
+        playsInline
+        onPlay={() => setIsCakeSongPlaying(true)}
+        onPause={() => setIsCakeSongPlaying(false)}
+        onEnded={() => setIsCakeSongPlaying(false)}
+      />
 
       {/* Atmospheric warm background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-[#FF9A9E]/15 via-[#F6D365]/20 to-[#FECFEF]/10 rounded-full blur-[120px] pointer-events-none -z-10" />

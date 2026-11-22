@@ -63,17 +63,36 @@ class SongAudioEngine {
     });
   }
 
+  private cleanupUnlockListeners: (() => void) | null = null;
+
   public setupGlobalUnlock() {
     if (typeof window === "undefined" || this.isAutoPlaySetup) return;
     this.isAutoPlaySetup = true;
 
+    const events = ["click", "pointerdown", "touchstart", "scroll", "wheel", "keydown"];
+    
+    const cleanup = () => {
+      events.forEach((evt) => {
+        window.removeEventListener(evt, unlock);
+      });
+      this.cleanupUnlockListeners = null;
+    };
+    this.cleanupUnlockListeners = cleanup;
+
     const unlock = () => {
-      if (!this.isPlaying && !this.userManuallyPaused) {
-        this.start(0.8).catch(() => {});
+      if (this.isPlaying) {
+        cleanup();
+        return;
+      }
+      if (!this.userManuallyPaused) {
+        this.start(0.8)
+          .then(() => {
+            cleanup();
+          })
+          .catch(() => {});
       }
     };
 
-    const events = ["click", "pointerdown", "touchstart", "scroll", "wheel", "keydown"];
     events.forEach((evt) => {
       window.addEventListener(evt, unlock, { passive: true });
     });
@@ -91,6 +110,10 @@ class SongAudioEngine {
       await this.audio.play();
       this.isPlaying = true;
       this.notify();
+
+      if (this.cleanupUnlockListeners) {
+        this.cleanupUnlockListeners();
+      }
 
       const steps = 16;
       const stepTime = (fadeDuration * 1000) / steps;
