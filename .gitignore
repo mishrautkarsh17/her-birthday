@@ -30,7 +30,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
 
 # vercel
@@ -39,3 +39,25 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local wish data & recordings
+/data
+/public/recordings
+
+# unrelated workspace files
+Antigravity-x64.exe
+*.mp4
+*.exe
+*.zip
+*.pdf
+*.xlsx
+*.tex
+WhatsApp Image*
+asali-nakali/
+asali-nakali.zip
+BTP_Report*
+Final_Term_Paper*
+Master_Research_Report*
+Pastel Test Results Dashboard*
+Coming Up Roses.mp3
+/hbd.mp3
