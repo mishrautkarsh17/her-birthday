@@ -51,7 +51,7 @@ export default function BirthdayPage() {
   return (
     <main className="relative min-h-screen bg-[#FFF9F5] text-[#1A1A1A] selection:bg-[#FF9A9E]/30 selection:text-[#1A1A1A]">
       {/* Intro Loading Sequence */}
-      {isLoading && <IntroLoading onComplete={() => setIsLoading(false)} />}
+      {isLoading && <IntroLoading onComplete={() => setIsLoading(false)} herName={herName} />}
 
       {/* Trailing Cursor Glow on Desktop */}
       <CursorGlow />
