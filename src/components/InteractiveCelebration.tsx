@@ -35,17 +35,18 @@ export default function InteractiveCelebration({
   const [isCutting, setIsCutting] = useState(false);
   const [isCakeCut, setIsCakeCut] = useState(false);
   const [isSongPlaying, setIsSongPlaying] = useState(false);
-  const songAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Playlist state inside celebration
   const [celebrationSongIndex, setCelebrationSongIndex] = useState(0);
   const activeCelebrationSong = playlistSongs[celebrationSongIndex];
 
-  // Stop background ambient music so his singing has full spotlight
+  // Subscribe to global audioEngine state
   useEffect(() => {
-    if (audioEngine && audioEngine.getIsPlaying()) {
-      audioEngine.fadeOutToSilence(1.5);
-    }
+    if (!audioEngine) return;
+    const unsub = audioEngine.subscribe((playing) => {
+      setIsSongPlaying(playing);
+    });
+    return () => unsub();
   }, []);
 
   // Timer for recording duration
@@ -65,6 +66,10 @@ export default function InteractiveCelebration({
 
   // Start Mic Recording
   const startRecording = async () => {
+    // Pause background song while recording voice wish so mic is clean
+    if (audioEngine && audioEngine.getIsPlaying()) {
+      audioEngine.stop(0.4);
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -181,45 +186,30 @@ export default function InteractiveCelebration({
         colors: ["#F6D365", "#FF9A9E", "#FECFEF", "#D9E7FF", "#FFFFFF", "#FFD700"],
       });
 
-      if (songAudioRef.current) {
-        songAudioRef.current.currentTime = 0;
-        songAudioRef.current.play().then(() => {
-          setIsSongPlaying(true);
-        }).catch(() => {
-          setIsSongPlaying(false);
-        });
+      if (audioEngine) {
+        audioEngine.restart();
       }
     }, 1300);
   };
 
   const toggleSongAudio = () => {
-    if (!songAudioRef.current) return;
+    if (!audioEngine) return;
     if (isSongPlaying) {
-      songAudioRef.current.pause();
-      setIsSongPlaying(false);
+      audioEngine.stop(0.5);
     } else {
-      songAudioRef.current.play();
-      setIsSongPlaying(true);
+      audioEngine.start(0.5);
     }
   };
 
   const handleProceedToPlaylist = () => {
-    if (songAudioRef.current && isSongPlaying) {
-      songAudioRef.current.pause();
-      setIsSongPlaying(false);
+    if (audioEngine && audioEngine.getIsPlaying()) {
+      audioEngine.stop(0.8);
     }
     setCurrentStep("playlist");
   };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0B0F1C] text-white px-6 select-none overflow-y-auto py-12">
-      {/* Hidden audio element for his HBD song */}
-      <audio
-        ref={songAudioRef}
-        src="/hbd.mp3"
-        preload="auto"
-        onEnded={() => setIsSongPlaying(false)}
-      />
 
       {/* Atmospheric warm background glow */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-[#FF9A9E]/15 via-[#F6D365]/20 to-[#FECFEF]/10 rounded-full blur-[120px] pointer-events-none -z-10" />
