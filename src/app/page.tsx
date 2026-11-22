@@ -9,7 +9,6 @@ import Section3LittleThings from "@/components/Section3LittleThings";
 import Section4FeelingsTimeline from "@/components/Section4FeelingsTimeline";
 import Section5Sorry from "@/components/Section5Sorry";
 import Section6BecauseOfYou from "@/components/Section6BecauseOfYou";
-import Section7Playlist from "@/components/Section7Playlist";
 import Section8Wishes from "@/components/Section8Wishes";
 import FinalSectionPeak from "@/components/FinalSectionPeak";
 import InteractiveCelebration from "@/components/InteractiveCelebration";
@@ -85,9 +84,6 @@ export default function BirthdayPage() {
 
       {/* Section 6: Because Of You */}
       <Section6BecauseOfYou />
-
-      {/* Section 7: Our Playlist */}
-      <Section7Playlist />
 
       {/* Section 8: My Wish For You */}
       <Section8Wishes />
