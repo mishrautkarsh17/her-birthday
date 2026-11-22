@@ -470,11 +470,8 @@ export default function InteractiveCelebration({
                           <span className={`w-0.5 bg-[#FF9A9E] ${isCakeSongPlaying ? 'animate-[bounce_1.4s_ease-in-out_infinite_0.4s]' : 'h-2'} rounded-full`} />
                         </div>
                         <div className="text-left">
-                          <p className="font-serif italic text-sm text-white font-medium">
-                            Happy Birthday 🎂
-                          </p>
-                          <p className="text-[11px] font-sans text-neutral-400">
-                            {isCakeSongPlaying ? "Playing your birthday celebration" : "Music paused"}
+                          <p className="font-serif italic text-base text-white font-medium">
+                            Happy Birthday, {herName} 🎂
                           </p>
                         </div>
                       </div>
