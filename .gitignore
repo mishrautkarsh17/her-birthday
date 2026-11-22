@@ -48,6 +48,7 @@ next-env.d.ts
 Antigravity-x64.exe
 *.mp4
 *.exe
+/Happy Birthday Piano Instrumental.mp3
 *.zip
 *.pdf
 *.xlsx

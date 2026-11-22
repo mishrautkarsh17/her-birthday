@@ -34,19 +34,26 @@ export default function InteractiveCelebration({
   // Cake Cutting State
   const [isCutting, setIsCutting] = useState(false);
   const [isCakeCut, setIsCakeCut] = useState(false);
-  const [isSongPlaying, setIsSongPlaying] = useState(false);
+  const [isCakeSongPlaying, setIsCakeSongPlaying] = useState(false);
+  const cakeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Playlist state inside celebration
   const [celebrationSongIndex, setCelebrationSongIndex] = useState(0);
   const activeCelebrationSong = playlistSongs[celebrationSongIndex];
 
-  // Subscribe to global audioEngine state
+  // Initialize cake celebration audio (happy.mp3)
   useEffect(() => {
-    if (!audioEngine) return;
-    const unsub = audioEngine.subscribe((playing) => {
-      setIsSongPlaying(playing);
-    });
-    return () => unsub();
+    const audio = new Audio("/happy.mp3");
+    audio.preload = "auto";
+    audio.addEventListener("play", () => setIsCakeSongPlaying(true));
+    audio.addEventListener("pause", () => setIsCakeSongPlaying(false));
+    audio.addEventListener("ended", () => setIsCakeSongPlaying(false));
+    cakeAudioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
   }, []);
 
   // Timer for recording duration
@@ -186,26 +193,48 @@ export default function InteractiveCelebration({
         colors: ["#F6D365", "#FF9A9E", "#FECFEF", "#D9E7FF", "#FFFFFF", "#FFD700"],
       });
 
-      if (audioEngine) {
-        audioEngine.restart();
+      // Pause the background song so the celebration music plays cleanly
+      if (audioEngine && audioEngine.getIsPlaying()) {
+        audioEngine.stop(0.4);
+      }
+
+      // Play the "happy" mp3 for cake celebration
+      if (cakeAudioRef.current) {
+        cakeAudioRef.current.currentTime = 0;
+        cakeAudioRef.current.play().catch(() => {
+          // Autoplay fallback if blocked by browser
+        });
       }
     }, 1300);
   };
 
-  const toggleSongAudio = () => {
-    if (!audioEngine) return;
-    if (isSongPlaying) {
-      audioEngine.stop(0.5);
+  const toggleCakeAudio = () => {
+    if (!cakeAudioRef.current) return;
+    if (isCakeSongPlaying) {
+      cakeAudioRef.current.pause();
     } else {
-      audioEngine.start(0.5);
+      if (audioEngine && audioEngine.getIsPlaying()) {
+        audioEngine.stop(0.4);
+      }
+      cakeAudioRef.current.play().catch(() => {});
     }
   };
 
   const handleProceedToPlaylist = () => {
+    if (cakeAudioRef.current) {
+      cakeAudioRef.current.pause();
+    }
     if (audioEngine && audioEngine.getIsPlaying()) {
       audioEngine.stop(0.8);
     }
     setCurrentStep("playlist");
+  };
+
+  const handleFinishCelebration = () => {
+    if (cakeAudioRef.current) {
+      cakeAudioRef.current.pause();
+    }
+    onFinish();
   };
 
   return (
@@ -436,26 +465,26 @@ export default function InteractiveCelebration({
                     <div className="p-4 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md max-w-sm mx-auto flex items-center justify-between shadow-lg">
                       <div className="flex items-center gap-3">
                         <div className="flex items-end gap-[3px] h-4 w-4">
-                          <span className="w-0.5 bg-[#FF9A9E] animate-[bounce_1.2s_ease-in-out_infinite] h-full rounded-full" />
-                          <span className="w-0.5 bg-[#FF9A9E] animate-[bounce_1s_ease-in-out_infinite_0.2s] h-2/3 rounded-full" />
-                          <span className="w-0.5 bg-[#FF9A9E] animate-[bounce_1.4s_ease-in-out_infinite_0.4s] h-4/5 rounded-full" />
+                          <span className={`w-0.5 bg-[#FF9A9E] ${isCakeSongPlaying ? 'animate-[bounce_1.2s_ease-in-out_infinite]' : 'h-1.5'} rounded-full`} />
+                          <span className={`w-0.5 bg-[#FF9A9E] ${isCakeSongPlaying ? 'animate-[bounce_1s_ease-in-out_infinite_0.2s]' : 'h-1'} rounded-full`} />
+                          <span className={`w-0.5 bg-[#FF9A9E] ${isCakeSongPlaying ? 'animate-[bounce_1.4s_ease-in-out_infinite_0.4s]' : 'h-2'} rounded-full`} />
                         </div>
                         <div className="text-left">
                           <p className="font-serif italic text-sm text-white font-medium">
-                            Singing Happy Birthday for you...
+                            Happy Birthday 🎂
                           </p>
                           <p className="text-[11px] font-sans text-neutral-400">
-                            (recorded just for you)
+                            {isCakeSongPlaying ? "Playing your birthday celebration" : "Music paused"}
                           </p>
                         </div>
                       </div>
 
                       <button
-                        onClick={toggleSongAudio}
-                        className="p-2 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors"
-                        title={isSongPlaying ? "Pause song" : "Play song"}
+                        onClick={toggleCakeAudio}
+                        className="p-2 rounded-full bg-white/15 hover:bg-white/25 text-white transition-colors cursor-pointer"
+                        title={isCakeSongPlaying ? "Pause song" : "Play song"}
                       >
-                        {isSongPlaying ? (
+                        {isCakeSongPlaying ? (
                           <Volume2 className="w-4 h-4 text-[#FF9A9E]" />
                         ) : (
                           <VolumeX className="w-4 h-4 text-neutral-400" />
@@ -577,7 +606,7 @@ export default function InteractiveCelebration({
               {/* Proceed to The Final Message */}
               <div className="pt-2">
                 <button
-                  onClick={onFinish}
+                  onClick={handleFinishCelebration}
                   className="group inline-flex items-center gap-2.5 px-9 py-4 rounded-full bg-white text-neutral-950 font-sans font-semibold text-sm hover:bg-neutral-100 shadow-[0_0_35px_rgba(255,255,255,0.4)] transition-all cursor-pointer hover:scale-105 active:scale-100"
                 >
                   <Sparkles className="w-4 h-4 text-[#FF9A9E]" />
