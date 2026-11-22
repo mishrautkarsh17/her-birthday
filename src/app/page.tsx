@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import IntroLoading from "@/components/IntroLoading";
 import HeroLanding from "@/components/HeroLanding";
 import Section1Letter from "@/components/Section1Letter";
@@ -17,12 +17,21 @@ import LastScreenWhiteout from "@/components/LastScreenWhiteout";
 import AudioPlayer from "@/components/AudioPlayer";
 import CursorGlow from "@/components/CursorGlow";
 import FloatingParticles from "@/components/FloatingParticles";
+import { audioEngine } from "@/utils/audioEngine";
 
 export default function BirthdayPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCelebration, setIsCelebration] = useState(false);
   const [isWhiteout, setIsWhiteout] = useState(false);
   const herName = "Jiya";
+
+  useEffect(() => {
+    // Immediately attempt autoplay and setup universal interaction unlock
+    if (audioEngine) {
+      audioEngine.setupGlobalUnlock();
+      audioEngine.attemptAutoPlay();
+    }
+  }, []);
 
   const scrollToFirstSection = () => {
     const el = document.getElementById("section-1");

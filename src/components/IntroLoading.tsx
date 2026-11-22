@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { audioEngine } from "@/utils/audioEngine";
 
 interface IntroLoadingProps {
   onComplete: () => void;
@@ -13,6 +14,11 @@ export default function IntroLoading({ onComplete }: IntroLoadingProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
+    // Attempt auto-playback as early as possible
+    if (audioEngine) {
+      audioEngine.attemptAutoPlay();
+    }
+
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -25,6 +31,9 @@ export default function IntroLoading({ onComplete }: IntroLoadingProps) {
 
     const timer = setTimeout(() => {
       setIsVisible(false);
+      if (audioEngine && !audioEngine.getIsPlaying()) {
+        audioEngine.start(0.8);
+      }
       setTimeout(onComplete, 900);
     }, 2400);
 
@@ -34,6 +43,12 @@ export default function IntroLoading({ onComplete }: IntroLoadingProps) {
     };
   }, [onComplete]);
 
+  const handleScreenTap = () => {
+    if (audioEngine && !audioEngine.getIsPlaying()) {
+      audioEngine.start(0.8);
+    }
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -41,7 +56,8 @@ export default function IntroLoading({ onComplete }: IntroLoadingProps) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FFF9F5] text-[#1A1A1A] select-none"
+          onClick={handleScreenTap}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FFF9F5] text-[#1A1A1A] select-none cursor-pointer"
         >
           {/* Subtle warm aura in the center */}
           <div className="absolute w-96 h-96 rounded-full bg-gradient-to-tr from-[#FF9A9E]/20 via-[#F6D365]/20 to-[#FECFEF]/20 blur-3xl pointer-events-none" />
@@ -73,9 +89,14 @@ export default function IntroLoading({ onComplete }: IntroLoadingProps) {
               />
             </div>
 
-            <p className="text-xs tracking-widest uppercase text-neutral-600 font-sans font-semibold mt-2">
-              moments of light & warmth
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs tracking-widest uppercase text-neutral-600 font-sans font-semibold mt-2">
+                moments of light & warmth
+              </p>
+              <p className="text-[11px] font-serif italic text-neutral-400">
+                (touch anywhere to listen)
+              </p>
+            </div>
           </motion.div>
         </motion.div>
       )}

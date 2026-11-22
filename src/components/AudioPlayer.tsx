@@ -23,9 +23,9 @@ export default function AudioPlayer() {
     setHasInteracted(true);
 
     if (isPlaying) {
-      audioEngine.stop(0.8);
+      audioEngine.stop(0.8, true);
     } else {
-      audioEngine.start(0.8);
+      audioEngine.start(0.8, true);
     }
   };
 

@@ -7,6 +7,8 @@ class SongAudioEngine {
   private currentVolume: number = 0.85;
   private listeners: Set<(playing: boolean) => void> = new Set();
   private fadeInterval: NodeJS.Timeout | null = null;
+  private userManuallyPaused: boolean = false;
+  private isAutoPlaySetup: boolean = false;
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -29,6 +31,10 @@ class SongAudioEngine {
         this.isPlaying = false;
         this.notify();
       });
+
+      // Immediately attempt autoplay and register global interaction triggers
+      this.attemptAutoPlay();
+      this.setupGlobalUnlock();
     }
   }
 
@@ -50,7 +56,33 @@ class SongAudioEngine {
     });
   }
 
-  public async start(fadeDuration: number = 0.8) {
+  public attemptAutoPlay() {
+    if (!this.audio || this.isPlaying || this.userManuallyPaused) return;
+    this.start(0.8).catch(() => {
+      // Browser autoplay policy blocked unprompted start; setupGlobalUnlock will catch user's first gesture
+    });
+  }
+
+  public setupGlobalUnlock() {
+    if (typeof window === "undefined" || this.isAutoPlaySetup) return;
+    this.isAutoPlaySetup = true;
+
+    const unlock = () => {
+      if (!this.isPlaying && !this.userManuallyPaused) {
+        this.start(0.8).catch(() => {});
+      }
+    };
+
+    const events = ["click", "pointerdown", "touchstart", "scroll", "wheel", "keydown"];
+    events.forEach((evt) => {
+      window.addEventListener(evt, unlock, { passive: true });
+    });
+  }
+
+  public async start(fadeDuration: number = 0.8, isManual: boolean = false) {
+    if (isManual) {
+      this.userManuallyPaused = false;
+    }
     if (!this.audio) return;
     if (this.fadeInterval) clearInterval(this.fadeInterval);
 
@@ -79,7 +111,10 @@ class SongAudioEngine {
     }
   }
 
-  public stop(fadeDuration: number = 0.8) {
+  public stop(fadeDuration: number = 0.8, isManual: boolean = false) {
+    if (isManual) {
+      this.userManuallyPaused = true;
+    }
     if (!this.audio || !this.isPlaying) return;
     if (this.fadeInterval) clearInterval(this.fadeInterval);
 
